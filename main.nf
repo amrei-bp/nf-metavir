@@ -54,7 +54,7 @@ def helpMSG() {
     """
 }
 
-workflow {
+
 
     // error handling
     if (
@@ -66,66 +66,68 @@ workflow {
     else { exit 1, "No executer selected: -profile local/uppmax/planet/itrop"}
 
 
-    //*************************************************
-    // STEP 0 - Include needed modules
-    //*************************************************
+//*************************************************
+// STEP 0 - Include needed modules
+//*************************************************
 
-    include {fastp} from './modules/fastp' params(output: params.output)
-    // including bowtie2 module if host mapping needed
-    if (params.skip_host_map==false) {
-        // do the host mapping
-        include {prep_bt2_index} from './modules/bowtie2' params(output: params.output)
-        include {bowtie2} from './modules/bowtie2' params(output: params.output)
+include {fastp} from './modules/fastp' params(output: params.output)
+// including bowtie2 module if host mapping needed
+if (params.skip_host_map==false) {
+    // do the host mapping
+    include {prep_bt2_index} from './modules/bowtie2' params(output: params.output)
+    include {bowtie2} from './modules/bowtie2' params(output: params.output)
+}
+else {
+        if(params.host_ref) {
+            exit 1, "skip_host_map options and host_ref are incompatible"
+        }
+}
+// including assembler module
+if (params.assembler=="megahit"){
+    include {megahit} from './modules/megahit' params(output: params.output)
+}
+else {
+    if (params.assembler=="metaspades"){
+        include {metaspades} from './modules/metaspades' params(output: params.output)
     }
     else {
-            if(params.host_ref) {
-                exit 1, "skip_host_map options and host_ref are incompatible"
-            }
+        exit 1, "no assembler selected, you need to choose from megahit or metaspades"
     }
-    // including assembler module
-    if (params.assembler=="megahit"){
-      include {megahit} from './modules/megahit' params(output: params.output)
-    }
-    else {
-        if (params.assembler=="metaspades"){
-          include {metaspades} from './modules/metaspades' params(output: params.output)
-        }
-        else {
-          exit 1, "no assembler selected, you need to choose from megahit or metaspades"
-        }
+}
+
+// including Kraken2 - protein level
+if (params.k2prot_db){
+    include {kraken2prot_reads} from './modules/kraken2.nf' params(output: params.output)
+    include {kraken2prot_contigs} from './modules/kraken2.nf' params(output: params.output)
+}
+// including Kraken2 - nucleotide level
+if (params.k2nt_db) {
+    include {kraken2nt_reads} from './modules/kraken2.nf' params(output: params.output)
+    include {kraken2nt_contigs} from './modules/kraken2.nf' params(output: params.output)
+}
+// TODO: here add warnings if no K2 db selected
+
+if (params.krona_chart_kraken) {
+    include {krona_chart_kraken} from './modules/krona.nf' params(output: params.output)
+}
+
+// including Diamond: ouputs for Pavian or Megan if needed
+if (params.diamond_db) {
+    if (params.skip_diamond4pavian==false){
+        include {diamond_contigs} from './modules/diamond.nf' params(output: params.output)
     }
 
-    // including Kraken2 - protein level
-    if (params.k2prot_db){
-        include {kraken2prot_reads} from './modules/kraken2.nf' params(output: params.output)
-        include {kraken2prot_contigs} from './modules/kraken2.nf' params(output: params.output)
+    if (params.diamond4megan==true) {
+        include {diamond4megan_contigs} from './modules/diamond.nf' params(output: params.output)
     }
-    // including Kraken2 - nucleotide level
-    if (params.k2nt_db) {
-        include {kraken2nt_reads} from './modules/kraken2.nf' params(output: params.output)
-        include {kraken2nt_contigs} from './modules/kraken2.nf' params(output: params.output)
+}
+else {
+    if(params.diamond4megan==true){
+        exit 1, "You need to specify a Diamond database to use"
     }
-    // TODO: here add warnings if no K2 db selected
+}
 
-    if (params.krona_chart_kraken) {
-        include {krona_chart_kraken} from './modules/krona.nf' params(output: params.output)
-    }
-
-    // including Diamond: ouputs for Pavian or Megan if needed
-    if (params.diamond_db) {
-        if (params.skip_diamond4pavian==false){
-            include {diamond_contigs} from './modules/diamond.nf' params(output: params.output)
-        }
-
-        if (params.diamond4megan==true) {
-            include {diamond4megan_contigs} from './modules/diamond.nf' params(output: params.output)
-        }
-    }
-    else {
-        if(params.diamond4megan==true){
-            exit 1, "You need to specify a Diamond database to use"
-        }
-    }
+workflow {
 
     //*************************************************
     // STEP 1 QC with fastp
