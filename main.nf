@@ -20,7 +20,7 @@ def helpMSG() {
     or
     nextflow run main.nf --illumina illumina/ --host_map host_ref/ -profile uppmax
         Input:
-    --illumina                  path to the directory containing the illumina read file (fastq) (default: $params.illumina)
+    --illumina                  path to the illumina read files (fastq) (default: $params.illumina)
         Optional input:
     --assembler                 de novo assembler selected: megahit or metaspades [default: $params.assembler]
     --host_ref                  path to the host reference genome to map on [default: $params.host_ref]
@@ -133,7 +133,7 @@ workflow {
 
     // DATA INPUT ILLUMINA
     illumina_input_ch = Channel
-        .fromFilePairs( "${params.illumina}/*_{1,2}.fastq{,.gz}", checkIfExists: true)
+        .fromFilePairs( "${params.illumina}", checkIfExists: true)
         .view()
 
     // run fastp module
