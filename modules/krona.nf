@@ -11,7 +11,7 @@ process krona_chart_kraken {
         prefix=${krak_report%$suffix}
         ## parse kraken-report
         parse_to_krona_v2.py ${krak_report}
-        ## create kron files
+        ## create krona files
         cut -d$'\t' -f3,6- "${prefix}report.parsed.txt" > "${prefix}krona.in"
         ktImportText -o "${prefix}krona.html" "${prefix}krona.in"
 

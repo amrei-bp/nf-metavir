@@ -1,12 +1,11 @@
 #!/usr/bin/env nextflow
 nextflow.enable.dsl=2
 
-start_var = Channel.from("""
+log.info("""
 ********* Start running Metavir pipeline *********
 nf-metavir is a workflow for metagenomics qc, assembly and taxonomic classification
 **************************************
 """)
-start_var.view()
 
 if (params.help) { exit 0, helpMSG() }
 
@@ -56,14 +55,17 @@ def helpMSG() {
 
 
 
-    // error handling
-    if (
-        workflow.profile.contains('planet') ||
-        workflow.profile.contains('uppmax') ||
-        workflow.profile.contains('itrop') ||
-        workflow.profile.contains('local')
-    ) { "executer selected" }
-    else { exit 1, "No executer selected: -profile local/uppmax/planet/itrop"}
+// error handling
+if (
+    workflow.profile.contains('planet') ||
+    workflow.profile.contains('uppmax') ||
+    workflow.profile.contains('itrop') ||
+    workflow.profile.contains('local')
+) { 
+    log.info ("executer selected")
+} else { 
+    exit 1, "No executer selected: -profile local/uppmax/planet/itrop"
+}
 
 
 //*************************************************
@@ -76,8 +78,7 @@ if (params.skip_host_map==false) {
     // do the host mapping
     include {prep_bt2_index} from './modules/bowtie2' params(output: params.output)
     include {bowtie2} from './modules/bowtie2' params(output: params.output)
-}
-else {
+} else {
         if(params.host_ref) {
             exit 1, "skip_host_map options and host_ref are incompatible"
         }
@@ -85,12 +86,10 @@ else {
 // including assembler module
 if (params.assembler=="megahit"){
     include {megahit} from './modules/megahit' params(output: params.output)
-}
-else {
+} else {
     if (params.assembler=="metaspades"){
         include {metaspades} from './modules/metaspades' params(output: params.output)
-    }
-    else {
+    } else {
         exit 1, "no assembler selected, you need to choose from megahit or metaspades"
     }
 }
@@ -107,9 +106,9 @@ if (params.k2nt_db) {
 }
 // TODO: here add warnings if no K2 db selected
 
-if (params.krona_chart_kraken) {
-    include {krona_chart_kraken} from './modules/krona.nf' params(output: params.output)
-}
+//if (params.krona_chart_kraken) {
+//    include {krona_chart_kraken} from './modules/krona.nf' params(output: params.output)
+//}
 
 // including Diamond: ouputs for Pavian or Megan if needed
 if (params.diamond_db) {
@@ -120,8 +119,7 @@ if (params.diamond_db) {
     if (params.diamond4megan==true) {
         include {diamond4megan_contigs} from './modules/diamond.nf' params(output: params.output)
     }
-}
-else {
+} else {
     if(params.diamond4megan==true){
         exit 1, "You need to specify a Diamond database to use"
     }
@@ -145,9 +143,9 @@ workflow {
     //*************************************************
     // STEP 2 - Optional - Host mapping
     //*************************************************
-    if (params.skip_host_map==false){
+    if (!params.skip_host_map){
             if(params.host_ref) {
-                fasta = file(params.host_ref)
+                fasta = file(params.host_ref, checkIfExists: true)
                 if( !fasta.exists() ) exit 1, "Fasta file not found: ${params.host_ref}"
 
                 // The reference genome file
@@ -156,16 +154,15 @@ workflow {
                         .set {genome}
 
                 if (
-                file("${fasta.baseName}.1.bt2").exists() &&
-                file("${fasta.baseName}.2.bt2").exists() &&
-                file("${fasta.baseName}.3.bt2").exists() &&
-                file("${fasta.baseName}.4.bt2").exists() &&
-                file("${fasta.baseName}.rev.1.bt2").exists() &&
-                file("${fasta.baseName}.rev.2.bt2").exists()
+                    file("${fasta.baseName}.1.bt2").exists() &&
+                    file("${fasta.baseName}.2.bt2").exists() &&
+                    file("${fasta.baseName}.3.bt2").exists() &&
+                    file("${fasta.baseName}.4.bt2").exists() &&
+                    file("${fasta.baseName}.rev.1.bt2").exists() &&
+                    file("${fasta.baseName}.rev.2.bt2").exists()
                 ){
                     index_files = Channel.fromPath("${fasta.baseName}*.bt2")
-                }
-                else {
+                } else {
                     //prep genome index
                     prep_bt2_index(genome)
                     index_files = prep_bt2_index.out
@@ -174,13 +171,11 @@ workflow {
                 // mapping bowtie2
                 bowtie2(illumina_clean_ch,index_files.collect())
                 illumina_host_unmapped_ch = bowtie2.out[0]
-            }
-            else {
+            } else {
                 "Warning: No reference genome specified! Skipping host mapping"
                 illumina_host_unmapped_ch = illumina_clean_ch
             }
-    }
-    else {
+    } else {
         illumina_host_unmapped_ch = illumina_clean_ch
     }
 
@@ -191,8 +186,7 @@ workflow {
     if (params.assembler=="megahit"){
       megahit(illumina_host_unmapped_ch)
       contigs_ch = megahit.out[0]
-    }
-    else {
+    } else {
       metaspades(illumina_host_unmapped_ch)
       contigs_ch = metaspades.out[0]
     }
@@ -204,7 +198,7 @@ workflow {
     if (params.k2prot_db){
         kraken2prot_reads(illumina_host_unmapped_ch, params.k2prot_db)
         kraken2prot_contigs(contigs_ch, params.k2prot_db)
-        if (params.krona_chart==true) {
+        if (params.krona_chart) {
             k2res_reads_rep_ch = kraken2prot_reads.out[1]
         //    krona_chart_kraken(k2res_reads_rep_ch)
         }
