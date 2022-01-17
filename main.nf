@@ -240,5 +240,6 @@ workflow {
     // STEP 5 - taxonomic visualisation - KronaChart
     //*************************************************
 
+    krona_chart_kraken(kraken2nt_reads)
 
 }
