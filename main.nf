@@ -106,7 +106,7 @@ if (params.k2nt_db) {
 }
 // TODO: here add warnings if no K2 db selected
 
-if (params.krona_chart_kraken) {
+if (params.krona_chart) {
     include {krona_chart_kraken} from './modules/krona.nf' params(output: params.output)
 }
 
