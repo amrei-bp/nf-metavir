@@ -106,9 +106,9 @@ if (params.k2nt_db) {
 }
 // TODO: here add warnings if no K2 db selected
 
-//if (params.krona_chart_kraken) {
-//    include {krona_chart_kraken} from './modules/krona.nf' params(output: params.output)
-//}
+if (params.krona_chart_kraken) {
+    include {krona_chart_kraken} from './modules/krona.nf' params(output: params.output)
+}
 
 // including Diamond: ouputs for Pavian or Megan if needed
 if (params.diamond_db) {
