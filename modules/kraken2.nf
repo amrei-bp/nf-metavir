@@ -56,29 +56,26 @@ process kraken2nt_reads {
 
     script:
 
-        if(workflow.profile.contains('uppmax')){
+        if(workflow.profile == 'uppmax')
+            """
+            mkdir kraken2db
+            cp -R $db_k2nt/* kraken2db
+            kraken2 --db kraken2db --memory-mapping \
+            --threads ${task.cpus} --output ${id}_kn2_nt-res.txt \
+            --report-minimizer-data \
+            --report ${id}_kn2_nt-report.txt \
+            --paired ${illumina[0]} ${illumina[1]}
+            """
 
-        """
-        mkdir kraken2db
-        cp -R $db_k2nt/* kraken2db
-        kraken2 --db kraken2db --memory-mapping \
-        --threads ${task.cpus} --output ${id}_kn2_nt-res.txt \
-        --report-minimizer-data \
-        --report ${id}_kn2_nt-report.txt \
-        --paired ${illumina[0]} ${illumina[1]}
-        """
+        else
+            """
+            kraken2 --db ${db_k2nt} --memory-mapping \
+            --threads ${task.cpus} --output ${id}_kn2_nt-res.txt \
+            --report-minimizer-data \
+            --report ${id}_kn2_nt-report.txt \
+            --paired ${illumina[0]} ${illumina[1]}
+            """
 
-        } else {
-
-        """
-        kraken2 --db ${db_k2nt} --memory-mapping \
-        --threads ${task.cpus} --output ${id}_kn2_nt-res.txt \
-        --report-minimizer-data \
-        --report ${id}_kn2_nt-report.txt \
-        --paired ${illumina[0]} ${illumina[1]}
-        """
-
-        }
 }
 
 process kraken2nt_contigs {
@@ -94,23 +91,21 @@ process kraken2nt_contigs {
         path("*_kn2_nt-re*.txt")
         
     script:
-        if(workflow.profile.contains('uppmax')){
-
-        """
-        mkdir kraken2db
-        cp -R $db_k2nt/* kraken2db
-        kraken2 --db kraken2db --memory-mapping \
+        if(workflow.profile == 'uppmax')
+            """
+            mkdir kraken2db
+            cp -R $db_k2nt/* kraken2db
+            kraken2 --db kraken2db --memory-mapping \
             --threads ${task.cpus} --output ${id}_kn2_nt-res.txt \
             --report-minimizer-data \
             --report ${id}_kn2_nt-report.txt ${contigs}
-        """
+            """
 
-        } else {
-            
-        """
-        kraken2 --db ${db_k2nt} --memory-mapping \
-            --threads ${task.cpus} --output ${id}_kn2_nt-res.txt \
-            --report-minimizer-data \
-            --report ${id}_kn2_nt-report.txt ${contigs}
-        """
+        else
+            """
+            kraken2 --db ${db_k2nt} --memory-mapping \
+                --threads ${task.cpus} --output ${id}_kn2_nt-res.txt \
+                --report-minimizer-data \
+                --report ${id}_kn2_nt-report.txt ${contigs}
+            """
 }
