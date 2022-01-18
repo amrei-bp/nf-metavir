@@ -209,7 +209,7 @@ workflow {
     //           on reads and contigs - Kraken2
     //*************************************************
     if (params.k2nt_db) {
-        k2nt_db_path = file(params.k2nt_db, checkIfExists; true)
+        k2nt_db_path = file(params.k2nt_db, checkIfExists: true)
         kraken2nt_reads(illumina_host_unmapped_ch, k2nt_db_path)
         kraken2nt_contigs(contigs_ch, k2nt_db_path)
     }
