@@ -58,6 +58,7 @@ process kraken2nt_reads {
 
         if(workflow.profile == 'uppmax')
             """
+        
             mkdir kraken2db
             cp -R $db_k2nt/* kraken2db
             kraken2 --db kraken2db --memory-mapping \
