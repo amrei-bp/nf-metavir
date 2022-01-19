@@ -96,9 +96,9 @@ process kraken2nt_contigs {
             """
             mkdir kraken2db
             cp -R $db_k2nt/* kraken2db
-            kraken2 --db kraken2db --memory-mapping \
-            --threads ${task.cpus} --output ${id}_kn2_nt-res.txt \
-            --report-minimizer-data \
+            kraken2 --db kraken2db --memory-mapping \\
+            --threads ${task.cpus} --output ${id}_kn2_nt-res.txt \\
+            --report-minimizer-data \\
             --report ${id}_kn2_nt-report.txt ${contigs}
             """
 
