@@ -9,7 +9,7 @@ process krona_chart_kraken {
 
         """
         suffix="report.txt"
-        prefix=${krak_report%$suffix}
+        prefix=${krak_report%\$suffix}
         ## parse kraken-report
         parse_to_krona_v2.py ${krak_report}
         ## create krona files
