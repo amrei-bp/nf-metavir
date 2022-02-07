@@ -60,7 +60,7 @@ process kraken2nt_reads {
             """
         
             mkdir kraken2db
-            cp -R $db_k2nt/* kraken2db
+            rsync -a $db_k2nt/* kraken2db
             kraken2 --db ./kraken2db --memory-mapping \
             --threads ${task.cpus} --output ${id}_kn2_nt-res.txt \
             --report-minimizer-data \
@@ -95,7 +95,7 @@ process kraken2nt_contigs {
         if(workflow.profile == 'uppmax')
             """
             mkdir kraken2db
-            cp -R $db_k2nt/* kraken2db
+            rsync -a $db_k2nt/* kraken2db
             kraken2 --db ./kraken2db --memory-mapping \\
             --threads ${task.cpus} --output ${id}_kn2_nt-res.txt \\
             --report-minimizer-data \\
